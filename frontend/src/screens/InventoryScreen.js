@@ -14,14 +14,13 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { inventoryService, landService } from '../services/api';
+import { inventoryService } from '../services/api';
 
 export default function InventoryScreen() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [lands, setLands] = useState([]);
   
   // Filtering state
   const [activeFilter, setActiveFilter] = useState('All');
@@ -32,11 +31,11 @@ export default function InventoryScreen() {
     category: 'fertilizer',
     quantity: '',
     unit: 'kg',
+    price: '',
     reorderPoint: '',
     expiryDate: '',
     supplierName: '',
     supplierContact: '',
-    landId: '',
   });
 
   const categories = [
@@ -47,7 +46,26 @@ export default function InventoryScreen() {
     { label: 'Other', value: 'other' },
   ];
 
+  const unitOptions = {
+    seed: ['kg', 'g', 'bags'],
+    fertilizer: ['kg', 'g', 'bags'],
+    pesticide: ['L', 'cans'],
+    herbicide: ['L', 'cans'],
+    other: ['kg', 'g', 'bags', 'L', 'cans'],
+  };
+
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const webDateInputStyle = {
+    width: '100%',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    fontSize: 16,
+    color: '#212121',
+    backgroundColor: '#fafafa',
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -58,14 +76,10 @@ export default function InventoryScreen() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [invRes, landRes] = await Promise.all([
-        inventoryService.getAll(),
-        landService.getAll()
-      ]);
+      const invRes = await inventoryService.getAll();
       setItems(invRes.data);
-      setLands(landRes.data || []);
     } catch (error) {
-      Alert.alert('Error', 'Failed to fetch inventory or lands');
+      Alert.alert('Error', 'Failed to fetch inventory');
     } finally {
       setLoading(false);
     }
@@ -81,9 +95,28 @@ export default function InventoryScreen() {
       Alert.alert('Validation Error', 'Please enter a valid positive number for quantity.');
       return false;
     }
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price < 0) {
+      Alert.alert('Validation Error', 'Please enter a valid non-negative price.');
+      return false;
+    }
     const reorder = parseFloat(formData.reorderPoint);
     if (isNaN(reorder) || reorder < 0) {
       Alert.alert('Validation Error', 'Please enter a valid positive number for reorder point.');
+      return false;
+    }
+    if (formData.expiryDate) {
+      const selectedDate = new Date(formData.expiryDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
+      if (selectedDate <= today) {
+        Alert.alert('Validation Error', 'Expiry date must be after today.');
+        return false;
+      }
+    }
+    if (formData.supplierContact && !/^[0-9]{10}$/.test(formData.supplierContact)) {
+      Alert.alert('Validation Error', 'Supplier contact number must be exactly 10 digits.');
       return false;
     }
     return true;
@@ -92,18 +125,18 @@ export default function InventoryScreen() {
   const createItem = async () => {
     if (!validateForm()) return;
     try {
-      await inventoryService.create({
+        await inventoryService.create({
         name: formData.name,
         category: formData.category,
         quantity: parseFloat(formData.quantity) || 0,
         unit: formData.unit,
+        price: parseFloat(formData.price) || 0,
         reorderPoint: parseFloat(formData.reorderPoint) || 0,
         expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
         supplier: {
           name: formData.supplierName,
           contact: formData.supplierContact,
         },
-        landId: formData.landId || undefined
       });
       Alert.alert('Success', 'Item added successfully');
       setModalVisible(false);
@@ -122,13 +155,13 @@ export default function InventoryScreen() {
         category: formData.category,
         quantity: parseFloat(formData.quantity) || 0,
         unit: formData.unit,
+        price: parseFloat(formData.price) || 0,
         reorderPoint: parseFloat(formData.reorderPoint) || 0,
         expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
         supplier: {
           name: formData.supplierName,
           contact: formData.supplierContact,
         },
-        landId: formData.landId || undefined
       });
       Alert.alert('Success', 'Item updated successfully');
       setModalVisible(false);
@@ -141,6 +174,21 @@ export default function InventoryScreen() {
   };
 
   const deleteItem = async (id, name) => {
+    const proceed = Platform.OS === 'web'
+      ? window.confirm(`Delete ${name}?`)
+      : null;
+
+    if (Platform.OS === 'web') {
+      if (!proceed) return;
+      try {
+        await inventoryService.delete(id);
+        setItems((prevItems) => prevItems.filter(item => item._id !== id));
+      } catch (error) {
+        Alert.alert('Error', 'Failed to delete item');
+      }
+      return;
+    }
+
     Alert.alert('Delete Item', `Delete ${name}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -149,7 +197,7 @@ export default function InventoryScreen() {
         onPress: async () => {
           try {
             await inventoryService.delete(id);
-            fetchData();
+            setItems((prevItems) => prevItems.filter(item => item._id !== id));
           } catch (error) {
             Alert.alert('Error', 'Failed to delete item');
           }
@@ -175,11 +223,11 @@ export default function InventoryScreen() {
       category: 'fertilizer',
       quantity: '',
       unit: 'kg',
+      price: '',
       reorderPoint: '',
       expiryDate: '',
       supplierName: '',
       supplierContact: '',
-      landId: '',
     });
   };
 
@@ -189,12 +237,12 @@ export default function InventoryScreen() {
       name: item.name,
       category: item.category,
       quantity: item.quantity?.toString() || '0',
-      unit: item.unit || 'kg',
+      unit: item.unit || unitOptions[item.category][0] || 'kg',
+      price: item.price?.toString() || '0',
       reorderPoint: item.reorderPoint?.toString() || '0',
       expiryDate: item.expiryDate ? item.expiryDate.split('T')[0] : '',
       supplierName: item.supplier?.name || '',
       supplierContact: item.supplier?.contact || '',
-      landId: item.landId?._id || item.landId || '',
     });
     setModalVisible(true);
   };
@@ -230,11 +278,6 @@ export default function InventoryScreen() {
                    <Text style={styles.categoryText}>EXPIRED</Text>
                 </View>
               )}
-              {item.landId && (
-                <View style={[styles.categoryBadge, { backgroundColor: '#e3f2fd' }]}>
-                   <Text style={[styles.categoryText, { color: '#1976d2' }]}>📍 {item.landId?.location || 'Assigned'}</Text>
-                </View>
-              )}
             </View>
           </View>
           <View style={styles.cardActions}>
@@ -256,6 +299,8 @@ export default function InventoryScreen() {
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
+
+        <Text style={styles.detailText}>Price: {item.price?.toFixed ? item.price.toFixed(2) : item.price || '0.00'}</Text>
 
         <View style={styles.trackingDetails}>
           <Text style={styles.detailText}>Reorder Trigger: {item.reorderPoint} {item.unit}</Text>
@@ -325,7 +370,11 @@ export default function InventoryScreen() {
 
             <View style={styles.categoryContainer}>
               {categories.map((cat) => (
-                <TouchableOpacity key={cat.value} style={[styles.categoryOption, formData.category === cat.value && styles.categoryOptionSelected]} onPress={() => setFormData({ ...formData, category: cat.value })}>
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[styles.categoryOption, formData.category === cat.value && styles.categoryOptionSelected]}
+                  onPress={() => setFormData({ ...formData, category: cat.value, unit: unitOptions[cat.value][0] || 'kg' })}
+                >
                   <Text style={[styles.categoryOptionText, formData.category === cat.value && styles.categoryOptionTextSelected]}>{cat.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -333,17 +382,54 @@ export default function InventoryScreen() {
 
             <View style={styles.row}>
                <TextInput placeholderTextColor="#666" style={[styles.input, { flex: 1, marginRight: 5 }]} placeholder="Qty" keyboardType="numeric" value={formData.quantity.toString()} onChangeText={(text) => setFormData({ ...formData, quantity: text.replace(/[^0-9.]/g, '') })} />
-               <TextInput placeholderTextColor="#666" style={[styles.input, { flex: 1, marginLeft: 5 }]} placeholder="Unit (kg, L)" value={formData.unit} onChangeText={(text) => setFormData({ ...formData, unit: text })} />
+               <TextInput placeholderTextColor="#666" style={[styles.input, { flex: 1, marginLeft: 5 }]} placeholder="Price" keyboardType="numeric" value={formData.price.toString()} onChangeText={(text) => setFormData({ ...formData, price: text.replace(/[^0-9.]/g, '') })} />
+            </View>
+
+            <Text style={styles.label}>Unit</Text>
+            <View style={styles.categoryContainer}>
+              {(unitOptions[formData.category] || unitOptions.other).map((unitOption) => (
+                <TouchableOpacity
+                  key={unitOption}
+                  style={[styles.categoryOption, formData.unit === unitOption && styles.categoryOptionSelected]}
+                  onPress={() => setFormData({ ...formData, unit: unitOption })}
+                >
+                  <Text style={[styles.categoryOptionText, formData.unit === unitOption && styles.categoryOptionTextSelected]}>{unitOption}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             <Text style={styles.label}>Tracking & Reorder</Text>
             <TextInput placeholderTextColor="#666" style={styles.input} placeholder="Low Stock Reorder Point (Minimum Qty)" keyboardType="numeric" value={formData.reorderPoint.toString()} onChangeText={(text) => setFormData({ ...formData, reorderPoint: text.replace(/[^0-9.]/g, '') })} />
             
-            <TouchableOpacity style={styles.dateInput} onPress={() => setShowDatePicker(true)}>
-               <Text style={formData.expiryDate ? styles.dateText : styles.datePlaceholder}>
-                 {formData.expiryDate ? formData.expiryDate : 'Expiry Date (Optional)'}
-               </Text>
-            </TouchableOpacity>
+            {Platform.OS === 'web' ? (
+              <View style={{ marginBottom: 12 }}>
+                <input
+                  type="date"
+                  value={formData.expiryDate}
+                  min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                  onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                  style={{
+                    width: '100%',
+                    height: 48,
+                    padding: 12,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    fontSize: 16,
+                    color: '#212121',
+                    backgroundColor: '#fafafa',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.dateInput} onPress={() => setShowDatePicker(true)}>
+                <Text style={formData.expiryDate ? styles.dateText : styles.datePlaceholder}>
+                  {formData.expiryDate ? formData.expiryDate : 'Expiry Date (Optional)'}
+                </Text>
+              </TouchableOpacity>
+            )}
             
             {showDatePicker && (
                <View style={{ backgroundColor: '#1e1e1e', padding: 12, borderRadius: 12, marginVertical: 10, borderWidth: 1, borderColor: '#333', elevation: 4 }}>
@@ -354,7 +440,8 @@ export default function InventoryScreen() {
                     </TouchableOpacity>
                  </View>
                  <DateTimePicker
-                   value={formData.expiryDate ? new Date(formData.expiryDate) : new Date()}
+                   value={formData.expiryDate ? new Date(formData.expiryDate) : new Date(Date.now() + 24 * 60 * 60 * 1000)}
+                   minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
                    mode="date"
                    display={Platform.OS === 'ios' ? 'inline' : 'default'}
                    style={{ height: Platform.OS === 'ios' ? 320 : undefined }}
@@ -375,20 +462,7 @@ export default function InventoryScreen() {
 
             <Text style={styles.label}>Supplier Details</Text>
             <TextInput placeholderTextColor="#666" style={styles.input} placeholder="Supplier Name" value={formData.supplierName} onChangeText={(text) => setFormData({ ...formData, supplierName: text })} />
-            <TextInput placeholderTextColor="#666" style={styles.input} placeholder="Supplier Contact Number" value={formData.supplierContact} onChangeText={(text) => setFormData({ ...formData, supplierContact: text })} keyboardType="phone-pad" />
-
-            <Text style={styles.label}>Storage / Plot Location</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.landPillsContainer}>
-              {lands.map((land) => (
-                <TouchableOpacity
-                  key={land._id}
-                  style={[styles.landPill, formData.landId === land._id && styles.landPillSelected]}
-                  onPress={() => setFormData({ ...formData, landId: land._id })}
-                >
-                  <Text style={[styles.landPillText, formData.landId === land._id && styles.landPillTextSelected]}>{land.location}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <TextInput placeholderTextColor="#666" style={styles.input} placeholder="Supplier Contact Number" value={formData.supplierContact} onChangeText={(text) => setFormData({ ...formData, supplierContact: text.replace(/[^0-9]/g, '').slice(0, 10) })} keyboardType="phone-pad" />
 
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => { setModalVisible(false); setEditingItem(null); resetForm(); }}>
