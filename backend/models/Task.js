@@ -44,6 +44,13 @@ const taskSchema = new mongoose.Schema({
     },
     quantity: Number
   }],
+  machineryUsed: [{
+    machineryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Machinery'
+    },
+    duration: Number
+  }],
   dueDate: Date,
   completedAt: Date,
   createdAt: {
