@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/mongoDB');
+const dns=require('dns');
 
 dotenv.config();
 
@@ -27,12 +28,16 @@ app.get('/', (req, res) => {
     message: 'AgriSmart API is running!',
     version: '1.0.0',
     endpoints: {
+       auth: '/api/auth',
       tasks: '/api/tasks',
     }
   });
 });
+const authRoutes = require('./routes/authRoutes');
 
 
+
+dns.setServers(["0.0.0.0", "8.8.8.8"]);
 
 // Start server
 const PORT = process.env.PORT || 5000;
