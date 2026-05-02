@@ -54,6 +54,14 @@ export const taskService = {
   createEmployee: (data) => api.post('/tasks/employees', data),
 };
 
+// Machinery services
+export const machineryService = {
+  getAll: () => api.get('/machinery'),
+  create: (data) => api.post('/machinery', data),
+  update: (id, data) => api.put(`/machinery/${id}`, data),
+  delete: (id) => api.delete(`/machinery/${id}`),
+};
+
 // Finance services
 export const financeService = {
   getTransactions: () => api.get('/finance/transactions'),
