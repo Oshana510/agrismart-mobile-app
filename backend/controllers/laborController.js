@@ -1,4 +1,5 @@
 const Labor = require('../models/Labor');
+const Transaction = require('../models/Transaction');
 
 const createLabor = async (req, res) => {
   try {
@@ -12,7 +13,7 @@ const createLabor = async (req, res) => {
 
 const getLaborers = async (req, res) => {
   try {
-    const laborers = await Labor.find({ farmer: req.user.id });
+    const laborers = await Labor.find({ farmer: req.user.id }).populate('landId', 'location');
     
     // Separate active and inactive
     const active = laborers.filter(l => l.status === 'active');
@@ -95,12 +96,51 @@ const updateLabor = async (req, res) => {
 const deleteLabor = async (req, res) => {
   try {
     const labor = await Labor.findById(req.params.id);
-    labor.status = 'inactive';
-    await labor.save();
-    res.json({ message: 'Labor archived' });
+    if (!labor) return res.status(404).json({ message: 'Labor not found' });
+    if (labor.farmer.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    
+    await Labor.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Labor deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = { createLabor, getLaborers, getLabor, markAttendance, updateLabor, deleteLabor };
+const payLabor = async (req, res) => {
+  try {
+    const labor = await Labor.findById(req.params.id);
+    if (!labor) return res.status(404).json({ message: 'Labor not found' });
+    if (labor.farmer.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const { amount, description, source } = req.body;
+    
+    // Create an expense transaction natively in the Finance module
+    const transaction = await Transaction.create({
+       farmer: req.user.id,
+       type: 'expense',
+       category: 'labor',
+       amount: amount,
+       description: `Labor Wage - ${labor.name} - ${description || 'Cash Payment'}`,
+       landId: labor.landId // Link to laborer's assigned land
+    });
+
+    // Push into labor records
+    labor.paymentHistory.push({
+       date: new Date(),
+       amount: amount,
+       description: description || 'Cash Wage',
+       transactionId: transaction._id
+    });
+
+    await labor.save();
+    res.json(labor);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { createLabor, getLaborers, getLabor, markAttendance, updateLabor, deleteLabor, payLabor };
