@@ -1,9 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// IMPORTANT: Change this to your computer's local IP address (e.g. 192.168.x.x) 
 // so your mobile phone can connect to the backend server.
-const API_URL = 'http://192.168.1.61:5000/api';
+const API_URL = 'http://192.168.1.30:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -60,6 +59,14 @@ export const machineryService = {
   create: (data) => api.post('/machinery', data),
   update: (id, data) => api.put(`/machinery/${id}`, data),
   delete: (id) => api.delete(`/machinery/${id}`),
+};
+
+// Inventory services
+export const inventoryService = {
+  getAll: () => api.get('/inventory'),
+  create: (data) => api.post('/inventory', data),
+  update: (id, data) => api.put(`/inventory/${id}`, data),
+  delete: (id) => api.delete(`/inventory/${id}`),
 };
 
 // Finance services
