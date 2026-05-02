@@ -1,258 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  Alert,
-  Image,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { financeService, authService } from '../services/api';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-export default function DashboardScreen({ navigation }) {
-  const [user, setUser] = useState(null);
-  const [financeSummary, setFinanceSummary] = useState({ income: 0, expense: 0, profit: 0 });
-  const [refreshing, setRefreshing] = useState(false);
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'; 
+import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Entypo from '@expo/vector-icons/Entypo';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
-  useEffect(() => {
-    loadUser();
-  }, []);
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
+import DashboardScreen from '../screens/DashboardScreen';
+import FarmProfileScreen from '../screens/FarmProfileScreen';
+import InventoryScreen from '../screens/InventoryScreen';
+import MachineryScreen from '../screens/MachineryScreen';
+import TaskScreen from '../screens/TaskScreen';
+import FinanceScreen from '../screens/FinanceScreen';
+import LaborScreen from '../screens/LaborScreen';
 
-  const loadUser = async () => {
-    try {
-       const res = await authService.getMe();
-       setUser(res.data);
-       await AsyncStorage.setItem('user', JSON.stringify(res.data));
-    } catch (err) {
-       const userData = await AsyncStorage.getItem('user');
-       if (userData) setUser(JSON.parse(userData));
-    }
-    fetchDashboardMetrics();
-  };
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
-  const fetchDashboardMetrics = async () => {
-     try {
-        const plRes = await financeService.getProfitLoss();
-        setFinanceSummary(plRes.data);
-     } catch (error) {
-        console.log("Failed to fetch dashboard metrics");
-     }
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadUser();
-    setRefreshing(false);
-  };
-
-  const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        onPress: async () => {
-          await AsyncStorage.removeItem('token');
-          await AsyncStorage.removeItem('user');
-          navigation.replace('Login');
-        },
-      },
-    ]);
-  };
-
-  const modules = [
-    { name: 'Farm Profile', screen: 'Farm', icon: '🌾', color: '#4caf50', description: 'Farmer & Lands' },
-    { name: 'Inventory', screen: 'Inventory', icon: '📦', color: '#2196f3', description: 'Track stock levels' },
-    { name: 'Machinery', screen: 'Machinery', icon: '🚜', color: '#ff9800', description: 'Manage equipment' },
-    { name: 'Tasks', screen: 'Tasks', icon: '✅', color: '#9c27b0', description: 'Assign and track tasks' },
-    { name: 'Finance', screen: 'Finance', icon: '💰', color: '#f44336', description: 'Track expenses' },
-    { name: 'Labor', screen: 'Labor', icon: '👥', color: '#009688', description: 'Manage workers' },
-  ];
-
+function MainTabs() {
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    <Tab.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#2e7d32' },
+        headerTintColor: '#fff',
+        tabBarActiveTintColor: '#2e7d32',
+      }}
     >
-      <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {user?.profilePicture ? (
-             <Image source={{ uri: user.profilePicture }} style={styles.headerProfilePic} />
-          ) : (
-             <View style={styles.headerProfilePicPlaceholder}>
-               <Text style={styles.headerProfilePicInitials}>{user?.name ? user.name.charAt(0).toUpperCase() : 'F'}</Text>
-             </View>
-          )}
-          <View style={{ marginLeft: 15 }}>
-            <Text style={styles.welcome}>Welcome back,</Text>
-            <Text style={styles.userName}>{user?.name || 'Farmer'}!</Text>
-          </View>
-        </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNumber, {color: '#4caf50'}]}>LKR {(financeSummary.totalIncome || 0).toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Revenue</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNumber, {color: '#f44336'}]}>LKR {(financeSummary.totalExpense || 0).toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Expenses</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNumber, {color: (financeSummary.netProfit || 0) >= 0 ? '#4caf50' : '#f44336', fontSize: 20}]}>
-             LKR {(financeSummary.netProfit || 0).toLocaleString()}
-          </Text>
-          <Text style={styles.statLabel}>Profit / Loss</Text>
-        </View>
-      </View>
-
-      <Text style={styles.sectionTitle}>Farm Management</Text>
-
-      <View style={styles.modulesGrid}>
-        {modules.map((module, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.moduleCard, { backgroundColor: module.color }]}
-            onPress={() => navigation.navigate(module.screen)}
-          >
-            <Text style={styles.moduleIcon}>{module.icon}</Text>
-            <Text style={styles.moduleName}>{module.name}</Text>
-            <Text style={styles.moduleDesc}>{module.description}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+      <Tab.Screen name="Home" component={DashboardScreen} options={{
+        tabBarIcon: ({ color }) => <AntDesign name="home" size={24} color={color} />
+      }} />
+      <Tab.Screen name="Farm" component={FarmProfileScreen} options={{
+        tabBarIcon:({ color }) => <MaterialCommunityIcons name="barn" size={24} color={color} />
+      }} />
+      <Tab.Screen name="Inventory" component={InventoryScreen} options={{
+        tabBarIcon:({ color }) => <MaterialIcons name="inventory" size={24} color={color}/>
+      }}/>
+      <Tab.Screen name="Machinery" component={MachineryScreen} options={{
+        tabBarIcon:({ color }) => <Entypo name="tools" size={24} color={color} />
+      }}/>
+      <Tab.Screen name="Tasks" component={TaskScreen} options={{
+        tabBarIcon:({ color }) => <FontAwesome5 name="tasks" size={24} color={color} />
+      }}/>
+      <Tab.Screen name="Finance" component={FinanceScreen} options={{
+        tabBarIcon:({ color }) => <MaterialCommunityIcons name="finance" size={24} color={color} />
+      }}/>
+      <Tab.Screen name="Labor" component={LaborScreen} options={{
+        tabBarIcon:({ color }) => <FontAwesome6 name="person" size={24} color={color} />
+      }}/>
+    </Tab.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#2e7d32',
-    paddingTop: 50,
-  },
-  welcome: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
-  },
-  userName: {
-    fontSize: 22,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  headerProfilePic: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  headerProfilePicPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#c8e6c9',
-  },
-  headerProfilePicInitials: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-  },
-  logoutButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  logoutText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    padding: 15,
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    alignItems: 'center',
-    width: '32%',
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    margin: 15,
-    color: '#333',
-  },
-  modulesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 10,
-    marginBottom: 20,
-  },
-  moduleCard: {
-    width: '31%',
-    margin: '1%',
-    padding: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  moduleIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  moduleName: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  moduleDesc: {
-    color: '#fff',
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 4,
-    opacity: 0.9,
-  },
-});
+export default function AppNavigator() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: { backgroundColor: '#2e7d32' },
+          headerTintColor: '#fff',
+        }}
+      >
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create Account' }} />
+        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
