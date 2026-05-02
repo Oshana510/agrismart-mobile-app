@@ -1,8 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// IMPORTANT: Change this to your computer's local IP address (e.g. 192.168.x.x) 
 // so your mobile phone can connect to the backend server.
-const API_URL = 'http://192.168.1.30:5000/api';
+const API_URL = 'http://192.168.1.61:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -42,15 +43,12 @@ export const landService = {
   delete: (id) => api.delete(`/lands/${id}`),
 };
 
-// Task services
-export const taskService = {
-  getAll: () => api.get('/tasks/tasks'),
-  create: (data) => api.post('/tasks/tasks', data),
-  update: (id, data) => api.put(`/tasks/tasks/${id}`, data),
-  delete: (id) => api.delete(`/tasks/tasks/${id}`),
-  updateStatus: (id, status) => api.put(`/tasks/tasks/${id}/status`, { status }),
-  getLabors: () => api.get('/labor'),
-  createEmployee: (data) => api.post('/tasks/employees', data),
+// Inventory services
+export const inventoryService = {
+  getAll: () => api.get('/inventory'),
+  create: (data) => api.post('/inventory', data),
+  update: (id, data) => api.put(`/inventory/${id}`, data),
+  delete: (id) => api.delete(`/inventory/${id}`),
 };
 
 // Machinery services
@@ -61,12 +59,15 @@ export const machineryService = {
   delete: (id) => api.delete(`/machinery/${id}`),
 };
 
-// Inventory services
-export const inventoryService = {
-  getAll: () => api.get('/inventory'),
-  create: (data) => api.post('/inventory', data),
-  update: (id, data) => api.put(`/inventory/${id}`, data),
-  delete: (id) => api.delete(`/inventory/${id}`),
+// Task services
+export const taskService = {
+  getAll: () => api.get('/tasks/tasks'),
+  create: (data) => api.post('/tasks/tasks', data),
+  update: (id, data) => api.put(`/tasks/tasks/${id}`, data),
+  delete: (id) => api.delete(`/tasks/tasks/${id}`),
+  updateStatus: (id, status) => api.put(`/tasks/tasks/${id}/status`, { status }),
+  getLabors: () => api.get('/labor'),
+  createEmployee: (data) => api.post('/tasks/employees', data),
 };
 
 // Finance services
