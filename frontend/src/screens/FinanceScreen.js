@@ -11,7 +11,9 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { financeService, landService } from '../services/api';
@@ -22,6 +24,7 @@ export default function FinanceScreen() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [transactionType, setTransactionType] = useState('expense');
   const [lands, setLands] = useState([]);
   const [activeLandFilter, setActiveLandFilter] = useState('All');
@@ -338,7 +341,7 @@ export default function FinanceScreen() {
               placeholder="Amount (LKR)"
               keyboardType="numeric"
               value={formData.amount}
-              onChangeText={(text) => setFormData({ ...formData, amount: text })}
+              onChangeText={(text) => setFormData({ ...formData, amount: text.replace(/[^0-9.]/g, '') })}
             />
 
             <TextInput placeholderTextColor="#666"
@@ -348,12 +351,36 @@ export default function FinanceScreen() {
               onChangeText={(text) => setFormData({ ...formData, description: text })}
             />
 
-            <TextInput placeholderTextColor="#666"
-              style={styles.input}
-              placeholder="Date (YYYY-MM-DD)"
-              value={formData.date}
-              onChangeText={(text) => setFormData({ ...formData, date: text })}
-            />
+            <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.input, { justifyContent: 'center' }]}>
+              <Text style={{ color: formData.date ? '#212121' : '#666', fontSize: 16 }}>
+                {formData.date || 'Date (YYYY-MM-DD)'}
+              </Text>
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <View style={{ backgroundColor: '#fff', padding: 12, borderRadius: 12, marginVertical: 10, borderWidth: 1, borderColor: '#ddd', elevation: 4 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 8 }}>
+                  <Text style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: 15 }}>📅 Select Date</Text>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)} style={{ backgroundColor: '#2e7d32', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 }}>
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={new Date(formData.date || Date.now())}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                  themeVariant="light"
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === 'android') {
+                      setShowDatePicker(false);
+                    }
+                    if (selectedDate) {
+                      setFormData({ ...formData, date: selectedDate.toISOString().split('T')[0] });
+                    }
+                  }}
+                />
+              </View>
+            )}
 
             <Text style={styles.label}>Select Land Plot</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.landPillsContainer}>
@@ -440,6 +467,7 @@ const styles = StyleSheet.create({
   categoryOption: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#e0e0e0', margin: 4 },
   categoryOptionSelected: { backgroundColor: '#2e7d32' },
   categoryOptionText: { fontSize: 12, color: '#333' },
+  categoryOptionTextSelected: { color: '#fff' },
   categoryOptionTextSelected: { color: '#fff' },
 
   landPillsContainer: { flexDirection: 'row', marginBottom: 15, marginTop: 5 },

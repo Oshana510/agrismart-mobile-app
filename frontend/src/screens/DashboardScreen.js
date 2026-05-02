@@ -7,9 +7,10 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { financeService } from '../services/api';
+import { financeService, authService } from '../services/api';
 
 export default function DashboardScreen({ navigation }) {
   const [user, setUser] = useState(null);
@@ -21,8 +22,14 @@ export default function DashboardScreen({ navigation }) {
   }, []);
 
   const loadUser = async () => {
-    const userData = await AsyncStorage.getItem('user');
-    if (userData) setUser(JSON.parse(userData));
+    try {
+       const res = await authService.getMe();
+       setUser(res.data);
+       await AsyncStorage.setItem('user', JSON.stringify(res.data));
+    } catch (err) {
+       const userData = await AsyncStorage.getItem('user');
+       if (userData) setUser(JSON.parse(userData));
+    }
     fetchDashboardMetrics();
   };
 
@@ -70,9 +77,18 @@ export default function DashboardScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.header}>
-        <View>
-          <Text style={styles.welcome}>Welcome back,</Text>
-          <Text style={styles.userName}>{user?.name || 'Farmer'}!</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {user?.profilePicture ? (
+             <Image source={{ uri: user.profilePicture }} style={styles.headerProfilePic} />
+          ) : (
+             <View style={styles.headerProfilePicPlaceholder}>
+               <Text style={styles.headerProfilePicInitials}>{user?.name ? user.name.charAt(0).toUpperCase() : 'F'}</Text>
+             </View>
+          )}
+          <View style={{ marginLeft: 15 }}>
+            <Text style={styles.welcome}>Welcome back,</Text>
+            <Text style={styles.userName}>{user?.name || 'Farmer'}!</Text>
+          </View>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <Text style={styles.logoutText}>Logout</Text>
@@ -134,9 +150,31 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 22,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  headerProfilePic: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  headerProfilePicPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#c8e6c9',
+  },
+  headerProfilePicInitials: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2e7d32',
   },
   logoutButton: {
     backgroundColor: 'rgba(255,255,255,0.2)',
