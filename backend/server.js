@@ -17,10 +17,14 @@ app.use(express.json());
 
 // Import routes
 const taskRoutes = require('./routes/taskRoutes');
+const landRoutes = require('./routes/landRoutes');
+
 
 
 // Use routes
 app.use('/api/tasks', taskRoutes);
+app.use('/api/lands', landRoutes);
+
 
 // Basic route
 app.get('/', (req, res) => {
@@ -30,6 +34,7 @@ app.get('/', (req, res) => {
     endpoints: {
        auth: '/api/auth',
       tasks: '/api/tasks',
+      lands: '/api/lands',
     }
   });
 });
