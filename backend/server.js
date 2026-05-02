@@ -11,6 +11,7 @@ connectDB();
 
 const app = express();
 
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -38,8 +39,6 @@ app.get('/', (req, res) => {
     }
   });
 });
-const authRoutes = require('./routes/authRoutes');
-
 
 
 dns.setServers(["0.0.0.0", "8.8.8.8"]);
