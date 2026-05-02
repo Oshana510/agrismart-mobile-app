@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Linking,
 } from 'react-native';
 import { landService } from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function LandScreen() {
   const [lands, setLands] = useState([]);
@@ -27,9 +28,11 @@ export default function LandScreen() {
     mapLink: '',
   });
 
-  useEffect(() => {
-    fetchLands();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchLands();
+    }, [])
+  );
 
   const fetchLands = async () => {
     try {
@@ -266,7 +269,7 @@ export default function LandScreen() {
               placeholder="Size (acres)"
               keyboardType="numeric"
               value={formData.size.value}
-              onChangeText={(text) => setFormData({ ...formData, size: { ...formData.size, value: text.replace(/[^0-9.]/g, '') } })}
+              onChangeText={(text) => setFormData({ ...formData, size: { ...formData.size, value: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
             />
             
             <TextInput placeholderTextColor="#666"
@@ -283,7 +286,7 @@ export default function LandScreen() {
               placeholder="Nitrogen (N)"
               keyboardType="numeric"
               value={formData.soilDetails.nitrogen}
-              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, nitrogen: text.replace(/[^0-9.]/g, '') } })}
+              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, nitrogen: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
             />
 
             <TextInput placeholderTextColor="#666"
@@ -291,7 +294,7 @@ export default function LandScreen() {
               placeholder="Phosphorus (P)"
               keyboardType="numeric"
               value={formData.soilDetails.phosphorus}
-              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, phosphorus: text.replace(/[^0-9.]/g, '') } })}
+              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, phosphorus: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
             />
 
             <TextInput placeholderTextColor="#666"
@@ -299,7 +302,7 @@ export default function LandScreen() {
               placeholder="Potassium (K)"
               keyboardType="numeric"
               value={formData.soilDetails.potassium}
-              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, potassium: text.replace(/[^0-9.]/g, '') } })}
+              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, potassium: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
             />
 
             <TextInput placeholderTextColor="#666"
@@ -307,7 +310,7 @@ export default function LandScreen() {
               placeholder="pH Level"
               keyboardType="numeric"
               value={formData.soilDetails.ph}
-              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, ph: text.replace(/[^0-9.]/g, '') } })}
+              onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, ph: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
             />
 
             <View style={styles.modalButtons}>

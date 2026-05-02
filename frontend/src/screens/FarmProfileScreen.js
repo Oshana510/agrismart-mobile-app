@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { useFocusEffect } from '@react-navigation/native';
 import { landService, authService, inventoryService, machineryService, laborService } from '../services/api';
 
 export default function FarmProfileScreen() {
@@ -50,9 +51,11 @@ export default function FarmProfileScreen() {
   const [mapPickerVisible, setMapPickerVisible] = useState(false);
   const [pickedLocation, setPickedLocation] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   const fetchData = async () => {
     try {
@@ -530,7 +533,7 @@ export default function FarmProfileScreen() {
                  placeholder="Size (acres)"
                  keyboardType="numeric"
                  value={formData.size.value}
-                 onChangeText={(text) => setFormData({ ...formData, size: { ...formData.size, value: text } })}
+                 onChangeText={(text) => setFormData({ ...formData, size: { ...formData.size, value: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
                />
                <TextInput placeholderTextColor="#666"
                  style={[styles.input, { flex: 1, marginLeft: 5 }]}
@@ -586,28 +589,28 @@ export default function FarmProfileScreen() {
                 placeholder="N"
                 keyboardType="numeric"
                 value={formData.soilDetails.nitrogen}
-                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, nitrogen: text } })}
+                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, nitrogen: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
               />
               <TextInput placeholderTextColor="#666"
                 style={[styles.input, styles.gridInput]}
                 placeholder="P"
                 keyboardType="numeric"
                 value={formData.soilDetails.phosphorus}
-                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, phosphorus: text } })}
+                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, phosphorus: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
               />
               <TextInput placeholderTextColor="#666"
                 style={[styles.input, styles.gridInput]}
                 placeholder="K"
                 keyboardType="numeric"
                 value={formData.soilDetails.potassium}
-                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, potassium: text } })}
+                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, potassium: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
               />
               <TextInput placeholderTextColor="#666"
                 style={[styles.input, styles.gridInput]}
                 placeholder="pH"
                 keyboardType="numeric"
                 value={formData.soilDetails.ph}
-                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, ph: text } })}
+                onChangeText={(text) => setFormData({ ...formData, soilDetails: { ...formData.soilDetails, ph: text.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') } })}
               />
             </View>
 

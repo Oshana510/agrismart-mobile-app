@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,15 +11,18 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { financeService, authService } from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function DashboardScreen({ navigation }) {
   const [user, setUser] = useState(null);
   const [financeSummary, setFinanceSummary] = useState({ income: 0, expense: 0, profit: 0 });
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadUser();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadUser();
+    }, [])
+  );
 
   const loadUser = async () => {
     try {
