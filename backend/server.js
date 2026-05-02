@@ -1,8 +1,8 @@
-<<<<<<< Updated upstream
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/mongoDB');
+const dns=require('dns');
 
 dotenv.config();
 
@@ -16,49 +16,15 @@ app.use(cors());
 app.use(express.json());
 
 // Import routes
-
-
-// Use routes
-
-
-
-
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-=======
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const dns=require('dns');
-
-dotenv.config();
-
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Import routes
-const authRoutes = require('./routes/authRoutes');
-const landRoutes = require('./routes/landRoutes');
-const inventoryRoutes = require('./routes/inventoryRoutes');
-const machineryRoutes = require('./routes/machineryRoutes');
 const taskRoutes = require('./routes/taskRoutes');
-const financeRoutes = require('./routes/financeRoutes');
-const laborRoutes = require('./routes/laborRoutes');
+const landRoutes = require('./routes/landRoutes');
+
+
 
 // Use routes
-app.use('/api/auth', authRoutes);
-app.use('/api/lands', landRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/machinery', machineryRoutes);
 app.use('/api/tasks', taskRoutes);
-app.use('/api/finance', financeRoutes);
-app.use('/api/labor', laborRoutes);
+app.use('/api/lands', landRoutes);
+
 
 // Basic route
 app.get('/', (req, res) => {
@@ -66,33 +32,20 @@ app.get('/', (req, res) => {
     message: 'AgriSmart API is running!',
     version: '1.0.0',
     endpoints: {
-      auth: '/api/auth',
-      lands: '/api/lands',
-      inventory: '/api/inventory',
-      machinery: '/api/machinery',
+       auth: '/api/auth',
       tasks: '/api/tasks',
-      finance: '/api/finance',
-      labor: '/api/labor'
+      lands: '/api/lands',
     }
   });
 });
+const authRoutes = require('./routes/authRoutes');
+
+
 
 dns.setServers(["0.0.0.0", "8.8.8.8"]);
-
-// Database connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected Successfully'))
-  .catch(err => {
-    console.error('MongoDB Connection Error:');
-    console.error('Reason:', err.message);
-    if (err.message.includes('27017')) {
-      console.log('💡 TIP: Port 27017 might be blocked or your IP is not whitelisted in MongoDB Atlas.');
-    }
-  });
 
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
->>>>>>> Stashed changes
 });
