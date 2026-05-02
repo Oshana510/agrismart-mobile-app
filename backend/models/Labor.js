@@ -39,9 +39,22 @@ const laborSchema = new mongoose.Schema({
       ref: 'Task'
     }
   }],
+  paymentHistory: [{
+    date: { type: Date, default: Date.now },
+    amount: Number,
+    description: String,
+    transactionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Transaction'
+    }
+  }],
   joinDate: {
     type: Date,
     default: Date.now
+  },
+  landId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Land'
   }
 });
 
