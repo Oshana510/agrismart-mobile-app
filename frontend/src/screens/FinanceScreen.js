@@ -441,7 +441,6 @@ const styles = StyleSheet.create({
   categoryOptionSelected: { backgroundColor: '#2e7d32' },
   categoryOptionText: { fontSize: 12, color: '#333' },
   categoryOptionTextSelected: { color: '#fff' },
-  categoryOptionTextSelected: { color: '#fff' },
 
   landPillsContainer: { flexDirection: 'row', marginBottom: 15, marginTop: 5 },
   landPill: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f0f0f0', marginRight: 8, height: 35, justifyContent: 'center' },
