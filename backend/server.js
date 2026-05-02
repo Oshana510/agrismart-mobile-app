@@ -16,12 +16,11 @@ app.use(cors());
 app.use(express.json());
 
 // Import routes
-const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 
 // Use routes
-app.use('/api/auth', authRoutes);
-
+app.use('/api/tasks', taskRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
@@ -29,10 +28,14 @@ app.get('/', (req, res) => {
     message: 'AgriSmart API is running!',
     version: '1.0.0',
     endpoints: {
-      auth: '/api/auth',
+       auth: '/api/auth',
+      tasks: '/api/tasks',
     }
   });
 });
+const authRoutes = require('./routes/authRoutes');
+
+
 
 dns.setServers(["0.0.0.0", "8.8.8.8"]);
 
