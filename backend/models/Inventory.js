@@ -24,10 +24,6 @@ const inventorySchema = new mongoose.Schema({
     type: String,
     default: 'kg'
   },
-  price: {
-    type: Number,
-    default: 0
-  },
   reorderPoint: {
     type: Number,
     default: 10
